@@ -1,7 +1,7 @@
 {
-  "name": "leaflet-canvas-marker",
+  "name": "leaflet-canvas-markers-with-title",
   "version": "0.2.0",
-  "description": "Leaflet plugin to display markers on canvas instead of DOM",
+  "description": "Leaflet plugin to display markers with formatted title on canvas instead of DOM",
   "main": "dist/leaflet.canvas-markers.js",
   "directories": {
     "example": "examples",
@@ -19,11 +19,11 @@
     "marker",
     "map"
   ],
-  "author": "Evgeniy Voynov <voynov.ev@gmail.com> (http://github.com/eJuke)",
+  "author": "Wniko <elpwc@hotmail.com> (http://github.com/elpwc)",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/eJuke/Leaflet.Canvas-Markers.git"
+    "url": "https://github.com/elpwc/Leaflet.Canvas-Markers-with-Title.git"
   },
   "devDependencies": {
     "script-loader": "^0.7.2",

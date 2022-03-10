@@ -24,7 +24,7 @@ function layerFactory(L) {
         },
 
         //Multiple layers at a time for rBush performance
-        addMarkers: function (markers) {
+        addMarkers: function (markers, title, titleOpt, additional) {
 
             var self = this;
             var tmpMark = [];
@@ -32,18 +32,17 @@ function layerFactory(L) {
 
             markers.forEach(function (marker) {
 
-                if (!((marker.options.pane == 'markerPane') && marker.options.icon))
-                {
+                if (!((marker.options.pane == 'markerPane') && marker.options.icon)) {
                     console.error('Layer isn\'t a marker');
                     return;
                 }
 
                 var latlng = marker.getLatLng();
                 var isDisplaying = self._map.getBounds().contains(latlng);
-                var s = self._addMarker(marker,latlng,isDisplaying);
+                var s = self._addMarker(marker, latlng, isDisplaying, title, titleOpt, additional);
 
                 //Only add to Point Lookup if we are on map
-                if (isDisplaying ===true) tmpMark.push(s[0]);
+                if (isDisplaying === true) tmpMark.push(s[0]);
 
                 tmpLatLng.push(s[1]);
             });
@@ -53,15 +52,17 @@ function layerFactory(L) {
         },
 
         //Adds single layer at a time. Less efficient for rBush
-        addMarker: function (marker) {
+        addMarker: function (marker, title, titleOpt, additional) {
+
+            console.log(123, title);
 
             var self = this;
             var latlng = marker.getLatLng();
             var isDisplaying = self._map.getBounds().contains(latlng);
-            var dat = self._addMarker(marker,latlng,isDisplaying);
+            var dat = self._addMarker(marker, latlng, isDisplaying, title, titleOpt, additional);
 
             //Only add to Point Lookup if we are on map
-            if(isDisplaying ===true) self._markers.insert(dat[0]);
+            if (isDisplaying === true) self._markers.insert(dat[0]);
 
             self._latlngMarkers.insert(dat[1]);
         },
@@ -79,15 +80,15 @@ function layerFactory(L) {
 
         removeLayer: function (layer) {
 
-            this.removeMarker(layer,true);
+            this.removeMarker(layer, true);
         },
 
-        removeMarker: function (marker,redraw) {
+        removeMarker: function (marker, redraw) {
 
             var self = this;
 
             //If we are removed point
-            if(marker["minX"]) marker = marker.data;
+            if (marker["minX"]) marker = marker.data;
 
             var latlng = marker.getLatLng();
             var isDisplaying = self._map.getBounds().contains(latlng);
@@ -101,15 +102,15 @@ function layerFactory(L) {
                 data: marker
             };
 
-            self._latlngMarkers.remove(markerData, function (a,b) {
+            self._latlngMarkers.remove(markerData, function (a, b) {
 
-                return a.data._leaflet_id ===b.data._leaflet_id;
+                return a.data._leaflet_id === b.data._leaflet_id;
             });
 
             self._latlngMarkers.total--;
             self._latlngMarkers.dirty++;
 
-            if(isDisplaying ===true && redraw ===true) {
+            if (isDisplaying === true && redraw === true) {
 
                 self._redraw(true);
             }
@@ -125,7 +126,7 @@ function layerFactory(L) {
             else map._panes.overlayPane.appendChild(this._canvas);
 
             map.on('moveend', this._reset, this);
-            map.on('resize',this._reset,this);
+            map.on('resize', this._reset, this);
 
             map.on('click', this._executeListeners, this);
             map.on('mousemove', this._executeListeners, this);
@@ -135,12 +136,6 @@ function layerFactory(L) {
 
             if (this.options.pane) this.getPane().removeChild(this._canvas);
             else map.getPanes().overlayPane.removeChild(this._canvas);
-
-            map.off('click', this._executeListeners, this);
-            map.off('mousemove', this._executeListeners, this);
-
-            map.off('moveend', this._reset, this);
-            map.off('resize',this._reset,this);
         },
 
         addTo: function (map) {
@@ -149,14 +144,7 @@ function layerFactory(L) {
             return this;
         },
 
-        clearLayers: function() {
-
-            this._latlngMarkers = null;
-            this._markers = null;
-            this._redraw(true);
-        },
-
-        _addMarker: function(marker,latlng,isDisplaying) {
+        _addMarker: function (marker, latlng, isDisplaying, title, titleOpt, additional) {
 
             var self = this;
             //Needed for pop-up & tooltip to work.
@@ -168,8 +156,8 @@ function layerFactory(L) {
             //_latlngMarkers contains Lat\Long coordinates of all markers in layer.
             if (!self._latlngMarkers) {
                 self._latlngMarkers = new rbush();
-                self._latlngMarkers.dirty=0;
-                self._latlngMarkers.total=0;
+                self._latlngMarkers.dirty = 0;
+                self._latlngMarkers.total = 0;
             }
 
             L.Util.stamp(marker);
@@ -177,33 +165,38 @@ function layerFactory(L) {
             var pointPos = self._map.latLngToContainerPoint(latlng);
             var iconSize = marker.options.icon.options.iconSize;
 
-            var adj_x = iconSize[0]/2;
-            var adj_y = iconSize[1]/2;
+            var adj_x = iconSize[0];
+            var adj_y = iconSize[1];
             var ret = [({
-                minX: (pointPos.x - adj_x),
-                minY: (pointPos.y - adj_y),
-                maxX: (pointPos.x + adj_x),
-                maxY: (pointPos.y + adj_y),
-                data: marker
-            }),({
+                minX: (pointPos.x - marker.options.icon.options.iconAnchor[0]),
+                minY: (pointPos.y - marker.options.icon.options.iconAnchor[1]),
+                maxX: (pointPos.x + adj_x - marker.options.icon.options.iconAnchor[0]),
+                maxY: (pointPos.y + adj_y - marker.options.icon.options.iconAnchor[1]),
+                data: marker,
+                title,
+                titleOpt, additional
+            }), ({
                 minX: latlng.lng,
                 minY: latlng.lat,
                 maxX: latlng.lng,
                 maxY: latlng.lat,
-                data: marker
+                data: marker,
+                title,
+                titleOpt, additional
             })];
 
             self._latlngMarkers.dirty++;
             self._latlngMarkers.total++;
 
             //Only draw if we are on map
-            if(isDisplaying===true) self._drawMarker(marker, pointPos);
+            if (isDisplaying === true) self._drawMarker(marker, pointPos, title, titleOpt, additional);
 
             return ret;
         },
 
-        _drawMarker: function (marker, pointPos) {
+        _drawMarker: function (marker, pointPos, title, titleOpt, additional) {
 
+            console.log('draw', title);
             var self = this;
 
             if (!this._imageLookup) this._imageLookup = {};
@@ -216,21 +209,21 @@ function layerFactory(L) {
 
             if (marker.canvas_img) {
 
-                self._drawImage(marker, pointPos);
+                self._drawImage(marker, pointPos, title, titleOpt, additional);
             }
             else {
 
-                if(self._imageLookup[iconUrl]) {
+                if (self._imageLookup[iconUrl]) {
 
                     marker.canvas_img = self._imageLookup[iconUrl][0];
 
-                    if (self._imageLookup[iconUrl][1] ===false) {
+                    if (self._imageLookup[iconUrl][1] === false) {
 
-                        self._imageLookup[iconUrl][2].push([marker,pointPos]);
+                        self._imageLookup[iconUrl][2].push([marker, pointPos]);
                     }
                     else {
 
-                        self._drawImage(marker,pointPos);
+                        self._drawImage(marker, pointPos, title, titleOpt, additional);
                     }
                 }
                 else {
@@ -242,19 +235,36 @@ function layerFactory(L) {
                     //Image,isLoaded,marker\pointPos ref
                     self._imageLookup[iconUrl] = [i, false, [[marker, pointPos]]];
 
-                    i.onload = function() {
+                    i.onload = function () {
 
                         self._imageLookup[iconUrl][1] = true;
                         self._imageLookup[iconUrl][2].forEach(function (e) {
 
-                            self._drawImage(e[0],e[1]);
+                            self._drawImage(e[0], e[1], title, titleOpt, additional);
                         });
                     }
                 }
             }
         },
 
-        _drawImage: function (marker, pointPos) {
+        /*
+        titleOpt {
+            normal{
+                font: string;
+                color: string;
+                borderColor: string;
+                borderWidth: number;
+            }
+            hover{
+
+            }
+            active{
+
+            }
+        }
+         */
+
+        _drawImage: function (marker, pointPos, title, titleOpt, additional) {
 
             var options = marker.options.icon.options;
 
@@ -265,6 +275,30 @@ function layerFactory(L) {
                 options.iconSize[0],
                 options.iconSize[1]
             );
+            this._context.lineWidth = titleOpt.normal.borderWidth;
+            this._context.font = titleOpt.normal.font;
+
+            // underline
+
+            if (this._hoveredMarker && this._hoveredMarker === additional) {
+                this._context.strokeStyle = titleOpt.normal.color;
+                this._context.moveTo(
+                    pointPos.x - options.iconAnchor[0] + options.iconSize[0],
+                    pointPos.y - options.iconAnchor[1] + options.iconSize[1]
+                );
+                this._context.lineTo(pointPos.x - options.iconAnchor[0] + options.iconSize[0] + this._context.measureText(title).width, pointPos.y - options.iconAnchor[1] + options.iconSize[1]);
+                this._context.lineWidth = 1.5;
+                this._context.stroke();
+                this._context.textBaseline = "bottom";
+            }
+
+
+            // title
+            this._context.strokeStyle = titleOpt.normal.borderColor;
+            this._context.strokeText(title, pointPos.x - options.iconAnchor[0] + options.iconSize[0], pointPos.y - options.iconAnchor[1] + options.iconSize[1]);
+            this._context.fillStyle = titleOpt.normal.color;
+            this._context.fillText(title, pointPos.x - options.iconAnchor[0] + options.iconSize[0], pointPos.y - options.iconAnchor[1] + options.iconSize[1]);
+
         },
 
         _reset: function () {
@@ -284,22 +318,22 @@ function layerFactory(L) {
 
             var self = this;
 
+            if (!this._map) return;
             if (clear) this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
-            if (!this._map || !this._latlngMarkers) return;
 
             var tmp = [];
 
             //If we are 10% individual inserts\removals, reconstruct lookup for efficiency
-            if (self._latlngMarkers.dirty/self._latlngMarkers.total >= .1) {
+            if (self._latlngMarkers.dirty / self._latlngMarkers.total >= .1) {
 
-                self._latlngMarkers.all().forEach(function(e) {
+                self._latlngMarkers.all().forEach(function (e) {
 
                     tmp.push(e);
                 });
 
                 self._latlngMarkers.clear();
                 self._latlngMarkers.load(tmp);
-                self._latlngMarkers.dirty=0;
+                self._latlngMarkers.dirty = 0;
                 tmp = [];
             }
 
@@ -321,21 +355,25 @@ function layerFactory(L) {
                 var pointPos = self._map.latLngToContainerPoint(e.data.getLatLng());
 
                 var iconSize = e.data.options.icon.options.iconSize;
-                var adj_x = iconSize[0]/2;
-                var adj_y = iconSize[1]/2;
+                var adj_x = iconSize[0];
+                var adj_y = iconSize[1];
 
                 var newCoords = {
-                    minX: (pointPos.x - adj_x),
-                    minY: (pointPos.y - adj_y),
-                    maxX: (pointPos.x + adj_x),
-                    maxY: (pointPos.y + adj_y),
-                    data: e.data
+
+                    minX: (pointPos.x - e.data.options.icon.options.iconAnchor[0]),
+                    minY: (pointPos.y - e.data.options.icon.options.iconAnchor[1]),
+                    maxX: (pointPos.x + adj_x - e.data.options.icon.options.iconAnchor[0]),
+                    maxY: (pointPos.y + adj_y - e.data.options.icon.options.iconAnchor[1]),
+                    data: e.data,
+                    title: e.title,
+                    titleOpt: e.titleOpt,
+                    additional: e.additional
                 }
 
                 tmp.push(newCoords);
 
                 //Redraw points
-                self._drawMarker(e.data, pointPos);
+                self._drawMarker(e.data, pointPos, e.title, e.titleOpt, e.additional);
             });
 
             //Clear rBush & Bulk Load for performance
@@ -369,13 +407,11 @@ function layerFactory(L) {
 
         _executeListeners: function (event) {
 
-            if (!this._markers) return;
-
             var me = this;
             var x = event.containerPoint.x;
             var y = event.containerPoint.y;
 
-            if(me._openToolTip) {
+            if (me._openToolTip) {
 
                 me._openToolTip.closeTooltip();
                 delete me._openToolTip;
@@ -385,21 +421,28 @@ function layerFactory(L) {
 
             if (ret && ret.length > 0) {
 
-                me._map._container.style.cursor="pointer";
+                me._map._container.style.cursor = "pointer";
 
-                if (event.type==="click") {
+                if (event.type === "click") {
 
                     var hasPopup = ret[0].data.getPopup();
-                    if(hasPopup) ret[0].data.openPopup();
+                    if (hasPopup) ret[0].data.openPopup();
 
                     me._onClickListeners.forEach(function (listener) { listener(event, ret); });
                 }
 
-                if (event.type==="mousemove") {
+                if (event.type === "mousemove") {
                     var hasTooltip = ret[0].data.getTooltip();
-                    if(hasTooltip) {
+                    if (hasTooltip) {
                         me._openToolTip = ret[0].data;
                         ret[0].data.openTooltip();
+                    }
+
+                    // mouse enter
+                    this._lasthoveredMarker = this._hoveredMarker;
+                    this._hoveredMarker = ret[0].additional;
+                    if (this._lasthoveredMarker !== this._hoveredMarker) {
+                        this._reset();
                     }
 
                     me._onHoverListeners.forEach(function (listener) { listener(event, ret); });
@@ -407,7 +450,14 @@ function layerFactory(L) {
             }
             else {
 
-                me._map._container.style.cursor="";
+                me._map._container.style.cursor = "";
+
+                // mouse leave
+                this._lasthoveredMarker = this._hoveredMarker;
+                this._hoveredMarker = null;
+                if (this._lasthoveredMarker !== this._hoveredMarker) {
+                    this._reset();
+                }
             }
         }
     });
