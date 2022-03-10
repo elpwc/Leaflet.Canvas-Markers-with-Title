@@ -127,6 +127,7 @@ function layerFactory(L) {
 
             map.on('moveend', this._reset, this);
             map.on('resize', this._reset, this);
+            map.on('zoom', this._reset, this);
 
             map.on('click', this._executeListeners, this);
             map.on('mousemove', this._executeListeners, this);
@@ -276,7 +277,6 @@ function layerFactory(L) {
                 options.iconSize[1]
             );
             this._context.lineWidth = titleOpt.normal.borderWidth;
-            this._context.font = titleOpt.normal.font;
 
             // underline
 
@@ -289,11 +289,12 @@ function layerFactory(L) {
                 this._context.lineTo(pointPos.x - options.iconAnchor[0] + options.iconSize[0] + this._context.measureText(title).width, pointPos.y - options.iconAnchor[1] + options.iconSize[1]);
                 this._context.lineWidth = 1.5;
                 this._context.stroke();
-                this._context.textBaseline = "bottom";
+                this._context.textBaseline = "Alphabetic";
             }
 
 
             // title
+            this._context.font = titleOpt.normal.font;
             this._context.strokeStyle = titleOpt.normal.borderColor;
             this._context.strokeText(title, pointPos.x - options.iconAnchor[0] + options.iconSize[0], pointPos.y - options.iconAnchor[1] + options.iconSize[1]);
             this._context.fillStyle = titleOpt.normal.color;
