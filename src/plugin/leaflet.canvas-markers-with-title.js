@@ -54,8 +54,6 @@ function layerFactory(L) {
         //Adds single layer at a time. Less efficient for rBush
         addMarker: function (marker, title, titleOpt, additional) {
 
-            console.log(123, title);
-
             var self = this;
             var latlng = marker.getLatLng();
             var isDisplaying = self._map.getBounds().contains(latlng);
@@ -143,6 +141,13 @@ function layerFactory(L) {
 
             map.addLayer(this);
             return this;
+        },
+
+        clearLayers: function() {
+
+            this._latlngMarkers = null;
+            this._markers = null;
+            this._redraw(true);
         },
 
         _addMarker: function (marker, latlng, isDisplaying, title, titleOpt, additional) {
@@ -278,6 +283,9 @@ function layerFactory(L) {
             );
             this._context.lineWidth = titleOpt.normal.borderWidth;
 
+            
+            this._context.font = titleOpt.normal.font;
+
             // underline
 
             if (this._hoveredMarker && this._hoveredMarker === additional) {
@@ -294,7 +302,6 @@ function layerFactory(L) {
 
 
             // title
-            this._context.font = titleOpt.normal.font;
             this._context.strokeStyle = titleOpt.normal.borderColor;
             this._context.strokeText(title, pointPos.x - options.iconAnchor[0] + options.iconSize[0], pointPos.y - options.iconAnchor[1] + options.iconSize[1]);
             this._context.fillStyle = titleOpt.normal.color;
@@ -319,8 +326,9 @@ function layerFactory(L) {
 
             var self = this;
 
-            if (!this._map) return;
             if (clear) this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
+            
+            if (!this._map || !this._latlngMarkers) return;
 
             var tmp = [];
 
