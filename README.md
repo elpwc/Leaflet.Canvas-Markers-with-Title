@@ -2,7 +2,7 @@
 
 !DEVELOPPING!
 
-This is a altered version of [Leaflet.Canvas-Markers](https://github.com/eJuke/Leaflet.Canvas-Markers),
+This is an altered version of [Leaflet.Canvas-Markers](https://github.com/eJuke/Leaflet.Canvas-Markers),
 with **addible custom title** and fix some known bugs.
  
 
