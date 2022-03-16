@@ -1,6 +1,6 @@
 {
   "name": "leaflet-canvas-markers-with-title",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Leaflet plugin to display markers with formatted title on canvas instead of DOM",
   "main": "dist/leaflet.canvas-markers-with-title.js",
   "directories": {
